@@ -1,0 +1,168 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.F_CopyAttrb..Create(BaseForm)
+Gui.F_CopyAttrb..Caption("Copy Workcenter Attribute (6283)")
+Gui.F_CopyAttrb..Size(5325,1575)
+Gui.F_CopyAttrb..MinX(0)
+Gui.F_CopyAttrb..MinY(0)
+Gui.F_CopyAttrb..Position(0,0)
+Gui.F_CopyAttrb..FontSize(9)
+Gui.F_CopyAttrb..BackColor(-2147483633)
+Gui.F_CopyAttrb..MousePointer(0)
+Gui.F_CopyAttrb..Event(UnLoad,Unload)
+Gui.F_CopyAttrb..AlwaysOnTop(False)
+Gui.F_CopyAttrb..FontName("Tahoma")
+Gui.F_CopyAttrb..ControlBox(True)
+Gui.F_CopyAttrb..MaxButton(True)
+Gui.F_CopyAttrb..MinButton(True)
+Gui.F_CopyAttrb..Moveable(True)
+Gui.F_CopyAttrb..Sizeable(True)
+Gui.F_CopyAttrb..ShowInTaskBar(True)
+Gui.F_CopyAttrb..TitleBar(True)
+Gui.F_CopyAttrb.cmdCopy.Create(Button)
+Gui.F_CopyAttrb.cmdCopy.Enabled(True)
+Gui.F_CopyAttrb.cmdCopy.Visible(True)
+Gui.F_CopyAttrb.cmdCopy.Zorder(0)
+Gui.F_CopyAttrb.cmdCopy.Size(1125,345)
+Gui.F_CopyAttrb.cmdCopy.Position(3285,480)
+Gui.F_CopyAttrb.cmdCopy.Caption("COPY")
+Gui.F_CopyAttrb.cmdCopy.FontName("Tahoma")
+Gui.F_CopyAttrb.cmdCopy.FontSize(8.25)
+Gui.F_CopyAttrb.cmdCopy.Event(Click,cmdCopy_Click)
+Gui.F_CopyAttrb.txtWC.Create(TextBox,"",True,1500,300,0,120,525,True,0,"Tahoma",8.25,,1)
+Gui.F_CopyAttrb.cmdBrowser.Create(Button)
+Gui.F_CopyAttrb.cmdBrowser.Enabled(True)
+Gui.F_CopyAttrb.cmdBrowser.Visible(True)
+Gui.F_CopyAttrb.cmdBrowser.Zorder(0)
+Gui.F_CopyAttrb.cmdBrowser.Size(1125,345)
+Gui.F_CopyAttrb.cmdBrowser.Position(1845,480)
+Gui.F_CopyAttrb.cmdBrowser.Caption("^")
+Gui.F_CopyAttrb.cmdBrowser.FontName("Tahoma")
+Gui.F_CopyAttrb.cmdBrowser.FontSize(8.25)
+Gui.F_CopyAttrb.cmdBrowser.Event(Click,BrowseWC)
+Gui.F_CopyAttrb.lbl1.Create(Label,"COPY FROM WORKCENTER",True,2145,195,0,165,240,True,0,"Tahoma",8.25,,0,0)
+Gui.F_CopyAttrb.lbl1.BorderStyle(0)
+Gui.F_CopyAttrb.lbl1.FontStyle(True,False,False,False,False)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+V.Global.sWC.Declare
+Program.Sub.Preflight.End
+
+Program.Sub.UnLoad.Start
+	F.ODBC.Connection!conx.Close
+	F.Intrinsic.Control.End
+Program.Sub.UnLoad.End
+
+Program.Sub.Main.Start
+V.Local.sCustomer.Declare
+V.Local.sShipID.Declare
+v.Local.sData.Declare
+v.Local.sSQL.Declare
+v.Local.i1.Declare
+v.Local.bExists.Declare
+V.Local.sQuery.Declare
+
+F.ODBC.Connection!conx.OpenCompanyConnection
+
+F.Intrinsic.Control.If(V.Caller.Hook,=,14840)
+	V.Passed.000068.Set("Copy Attribute")
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,14860)
+	V.Global.sWC.Set(V.Passed.000005)
+
+	Function.Intrinsic.Control.If(V.Global.sWC.Trim,=,"")
+		F.Intrinsic.UI.Msgbox("Please select a Workcenter before using this program.","Copy Workcenter Attribute (6283)")
+		F.Intrinsic.Control.End
+	Function.Intrinsic.Control.EndIf
+
+	f.Data.Dictionary.Exists("Workcenter",v.Local.bExists)
+	Function.Intrinsic.Control.If(v.Local.bExists,=,True)
+		f.Data.Dictionary.Close("Workcenter")
+		gui.F_CopyAttrb.txtWC.ClearAutoCompleteItems
+	Function.Intrinsic.Control.EndIf
+
+	F.Intrinsic.String.Build("SELECT workcenter, workcenter FROM V_APS_ATTRib WHERE Workcenter <> '{0}'",V.Global.sWC,v.Local.sSQL)
+
+	'Creating dictionary 
+	F.Data.Dictionary.CreateFromSql("Workcenter","conx",V.Local.sSql)
+
+	'Binding to text box
+	gui.F_CopyAttrb.txtWC.AddAutoCompleteItem("Workcenter",dictionary)
+
+	Gui.F_CopyAttrb..Show
+F.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+Program.Sub.BrowseWC.Start
+V.Local.fOnhand.Declare
+V.Local.fPrevReq.Declare
+V.Local.fRequirement.Declare
+V.Local.i1.Declare
+V.Local.iWidths.Declare
+V.Local.sDescription.Declare
+V.Local.sFilter.Declare
+V.Local.sQuery.Declare
+V.Local.sList.Declare
+V.Local.sLoc.Declare
+V.Local.sRet.Declare
+V.Local.sRow.Declare
+V.Local.sTitles.Declare
+V.Local.sJob.Declare
+V.Local.sSuffix.Declare
+V.Local.sWorkOrder.Declare
+V.Local.sCustomerPO.Declare
+
+'Browse for WO
+F.Intrinsic.String.Split("WC #*!*Name","*!*",V.Local.sTitles)
+F.Intrinsic.String.Split("100*!*1500","*!*",V.Local.iWidths)
+
+F.Intrinsic.String.Build("SELECT workcenter, B.WC_Name FROM V_APS_ATTRib A Left Join V_Workcenters B On A.Workcenter = B.Machine WHERE Workcenter <> '{0}'",V.Global.sWC,v.Local.sQuery)
+
+F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+F.Intrinsic.UI.Browser("Select a Workcenter","conx",V.Local.sQuery,V.Local.sTitles,V.Local.iWidths,16000,10000,V.Local.sRet)
+
+Gui.F_CopyAttrb.txtWC.Text("")
+
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	Gui.F_CopyAttrb.txtWC.Text(V.Local.sRet(0).Trim)
+F.Intrinsic.Control.EndIf
+Program.Sub.BrowseWC.End
+Program.Sub.cmdCopy_Click.Start
+F.Intrinsic.Control.BlockEvents
+V.Local.iID.Declare
+V.Local.sID.Declare
+V.Local.sSql.Declare
+V.Local.i1.Declare
+V.Local.i2.Declare
+V.Local.sCustomer.Declare
+V.Local.sShipID.Declare
+V.Local.iFlag.Declare
+V.Local.sQuery.Declare
+
+F.Intrinsic.String.Build("SELECT * FROM APS_ATTRib WHERE Workcenter = '{0}'",V.Screen.F_CopyAttrb!txtWC.Text.Trim,v.Local.sSQL)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rstTarget",v.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rstTarget.EOF,=,True)
+	F.Intrinsic.UI.Msgbox("Attributes of this Workcenter is not found, please try again.","Copy Workcenter Attribute (6283)")
+'	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Build("SELECT * FROM APS_ATTRib WHERE Workcenter = '{0}'",V.Global.sWC,v.Local.sSQL)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",v.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+		F.Intrinsic.String.Build("insert into APS_ATTRib (WORKCENTER, TITLE_1, IN_USE_1, TITLE_2, IN_USE_2, TITLE_3, IN_USE_3, TITLE_4, IN_USE_4, TITLE_5, IN_USE_5, TITLE_6, IN_USE_6, TITLE_7, IN_USE_7, TITLE_8, IN_USE_8, TITLE_9, IN_USE_9, TITLE_10, IN_USE_10, TITLE_11, IN_USE_11, TITLE_12, IN_USE_12, TITLE_13, IN_USE_13, TITLE_14, IN_USE_14, TITLE_15, IN_USE_15, TITLE_16, IN_USE_16, TITLE_17, IN_USE_17, TITLE_18, IN_USE_18, TITLE_19, IN_USE_19, TITLE_20, IN_USE_20, TITLE_21, IN_USE_21, TITLE_22, IN_USE_22, TITLE_23, IN_USE_23, TITLE_24, IN_USE_24, TITLE_25, IN_USE_25, TITLE_26, IN_USE_26, TITLE_27, IN_USE_27, TITLE_28, IN_USE_28, TITLE_29, IN_USE_29, TITLE_30, IN_USE_30 ) values('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}','{25}','{26}','{27}','{28}','{29}','{30}','{31}','{32}','{33}','{34}','{35}','{36}','{37}','{38}','{39}','{40}','{41}','{42}','{43}','{44}','{45}','{46}','{47}','{48}','{49}','{50}','{51}','{52}','{53}','{54}','{55}','{56}','{57}','{58}','{59}','{60}');", V.Global.sWC.Trim, V.ODBC.conx!rstTarget.FieldValTrim!Title_1, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_1, V.ODBC.conx!rstTarget.FieldValTrim!Title_2, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_2, V.ODBC.conx!rstTarget.FieldValTrim!Title_3, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_3, V.ODBC.conx!rstTarget.FieldValTrim!Title_4, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_4, V.ODBC.conx!rstTarget.FieldValTrim!Title_5, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_5, V.ODBC.conx!rstTarget.FieldValTrim!Title_6, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_6, V.ODBC.conx!rstTarget.FieldValTrim!Title_7, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_7, V.ODBC.conx!rstTarget.FieldValTrim!Title_8, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_8, V.ODBC.conx!rstTarget.FieldValTrim!Title_9, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_9, V.ODBC.conx!rstTarget.FieldValTrim!Title_10, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_10, V.ODBC.conx!rstTarget.FieldValTrim!Title_11, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_11, V.ODBC.conx!rstTarget.FieldValTrim!Title_12, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_12, V.ODBC.conx!rstTarget.FieldValTrim!Title_13, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_13, V.ODBC.conx!rstTarget.FieldValTrim!Title_14, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_14, V.ODBC.conx!rstTarget.FieldValTrim!Title_15, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_15, V.ODBC.conx!rstTarget.FieldValTrim!Title_16, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_16, V.ODBC.conx!rstTarget.FieldValTrim!Title_17, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_17, V.ODBC.conx!rstTarget.FieldValTrim!Title_18, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_18, V.ODBC.conx!rstTarget.FieldValTrim!Title_19, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_19, V.ODBC.conx!rstTarget.FieldValTrim!Title_20, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_20, V.ODBC.conx!rstTarget.FieldValTrim!Title_21, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_21, V.ODBC.conx!rstTarget.FieldValTrim!Title_22, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_22, V.ODBC.conx!rstTarget.FieldValTrim!Title_23, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_23, V.ODBC.conx!rstTarget.FieldValTrim!Title_24, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_24, V.ODBC.conx!rstTarget.FieldValTrim!Title_25, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_25, V.ODBC.conx!rstTarget.FieldValTrim!Title_26, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_26, V.ODBC.conx!rstTarget.FieldValTrim!Title_27, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_27, V.ODBC.conx!rstTarget.FieldValTrim!Title_28, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_28, V.ODBC.conx!rstTarget.FieldValTrim!Title_29, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_29, V.ODBC.conx!rstTarget.FieldValTrim!Title_30, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_30 ,v.Local.sSQL)
+		F.ODBC.Connection!conx.Execute(v.Local.sSQL)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("Update APS_ATTRib set TITLE_1 = '{1}', IN_USE_1 = '{2}', TITLE_2 = '{3}', IN_USE_2 = '{4}', TITLE_3 = '{5}', IN_USE_3 = '{6}', TITLE_4 = '{7}', IN_USE_4 = '{8}', TITLE_5 = '{9}', IN_USE_5 = '{10}', TITLE_6 = '{11}', IN_USE_6 = '{12}', TITLE_7 = '{13}', IN_USE_7 = '{14}', TITLE_8 = '{15}', IN_USE_8 = '{16}', TITLE_9 = '{17}', IN_USE_9 = '{18}', TITLE_10 = '{19}', IN_USE_10 = '{20}', TITLE_11 = '{21}', IN_USE_11 = '{22}', TITLE_12 = '{23}', IN_USE_12 = '{24}', TITLE_13 = '{25}', IN_USE_13 = '{26}', TITLE_14 = '{27}', IN_USE_14 = '{28}', TITLE_15 = '{29}', IN_USE_15 = '{30}', TITLE_16 = '{31}', IN_USE_16 = '{32}', TITLE_17 = '{33}', IN_USE_17 = '{34}', TITLE_18 = '{35}', IN_USE_18 = '{36}', TITLE_19 = '{37}', IN_USE_19 = '{38}', TITLE_20 = '{39}', IN_USE_20 = '{40}', TITLE_21 = '{41}', IN_USE_21 = '{42}', TITLE_22 = '{43}', IN_USE_22 = '{44}', TITLE_23 = '{45}', IN_USE_23 = '{46}', TITLE_24 = '{47}', IN_USE_24 = '{48}', TITLE_25 = '{49}', IN_USE_25 = '{50}', TITLE_26 = '{51}', IN_USE_26 = '{52}', TITLE_27 = '{53}', IN_USE_27 = '{54}', TITLE_28 = '{55}', IN_USE_28 = '{56}', TITLE_29 = '{57}', IN_USE_29 = '{58}', TITLE_30 = '{59}', IN_USE_30  = '{60}' where Workcenter = '{0}';", V.Global.sWC.Trim, V.ODBC.conx!rstTarget.FieldValTrim!Title_1, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_1, V.ODBC.conx!rstTarget.FieldValTrim!Title_2, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_2, V.ODBC.conx!rstTarget.FieldValTrim!Title_3, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_3, V.ODBC.conx!rstTarget.FieldValTrim!Title_4, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_4, V.ODBC.conx!rstTarget.FieldValTrim!Title_5, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_5, V.ODBC.conx!rstTarget.FieldValTrim!Title_6, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_6, V.ODBC.conx!rstTarget.FieldValTrim!Title_7, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_7, V.ODBC.conx!rstTarget.FieldValTrim!Title_8, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_8, V.ODBC.conx!rstTarget.FieldValTrim!Title_9, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_9, V.ODBC.conx!rstTarget.FieldValTrim!Title_10, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_10, V.ODBC.conx!rstTarget.FieldValTrim!Title_11, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_11, V.ODBC.conx!rstTarget.FieldValTrim!Title_12, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_12, V.ODBC.conx!rstTarget.FieldValTrim!Title_13, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_13, V.ODBC.conx!rstTarget.FieldValTrim!Title_14, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_14, V.ODBC.conx!rstTarget.FieldValTrim!Title_15, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_15, V.ODBC.conx!rstTarget.FieldValTrim!Title_16, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_16, V.ODBC.conx!rstTarget.FieldValTrim!Title_17, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_17, V.ODBC.conx!rstTarget.FieldValTrim!Title_18, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_18, V.ODBC.conx!rstTarget.FieldValTrim!Title_19, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_19, V.ODBC.conx!rstTarget.FieldValTrim!Title_20, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_20, V.ODBC.conx!rstTarget.FieldValTrim!Title_21, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_21, V.ODBC.conx!rstTarget.FieldValTrim!Title_22, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_22, V.ODBC.conx!rstTarget.FieldValTrim!Title_23, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_23, V.ODBC.conx!rstTarget.FieldValTrim!Title_24, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_24, V.ODBC.conx!rstTarget.FieldValTrim!Title_25, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_25, V.ODBC.conx!rstTarget.FieldValTrim!Title_26, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_26, V.ODBC.conx!rstTarget.FieldValTrim!Title_27, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_27, V.ODBC.conx!rstTarget.FieldValTrim!Title_28, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_28, V.ODBC.conx!rstTarget.FieldValTrim!Title_29, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_29, V.ODBC.conx!rstTarget.FieldValTrim!Title_30, V.ODBC.conx!rstTarget.FieldValTrim!In_Use_30 ,v.Local.sSQL)
+		F.ODBC.Connection!conx.Execute(v.Local.sSQL)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rst.Close
+	F.Intrinsic.UI.Msgbox("Done!","Copy Workcenter Attribute (6283)")
+F.Intrinsic.Control.EndIf	
+F.ODBC.conx!rstTarget.Close
+
+F.Intrinsic.Control.CallSub(Unload)
+Program.Sub.cmdCopy_Click.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$1
+${$6$}$dyunus$}$20210224131330287$}$xZ6SHi8g7O0Qsxe6AiO2NH3PnOKQRy0TUpxQvLHPVrsgge8cGyrF+i/duj5J3HYwvcn4mCdfMEk=
+Program.Sub.Comments.End
